@@ -2,8 +2,8 @@ use crate::img::ToPixel;
 use crate::random::RandomValue;
 use rand::Rng;
 
-pub trait WorldElement<E>: Default + ToPixel + Copy + RandomValue<E> {}
-impl<T, E> WorldElement<E> for T where T: Default + ToPixel + Copy + RandomValue<E> {}
+pub trait WorldElement: Default + ToPixel + Copy + RandomValue {}
+impl<T> WorldElement for T where T: Default + ToPixel + Copy + RandomValue {}
 
 #[derive(Clone, Copy)]
 pub enum BasicElement {
@@ -12,7 +12,7 @@ pub enum BasicElement {
     Void,
 }
 
-impl RandomValue<BasicElement> for BasicElement {
+impl RandomValue for BasicElement {
     fn random(rng: &mut impl Rng) -> BasicElement {
         match rng.gen_range(0..=2) as u32 {
             0 => BasicElement::Terrain,
