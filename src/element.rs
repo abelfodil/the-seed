@@ -1,4 +1,4 @@
-use crate::img::ToPixel;
+use crate::img::{ToPixel, Pixel};
 use crate::random::RandomValue;
 use rand::Rng;
 
@@ -23,11 +23,11 @@ impl RandomValue for BasicElement {
 }
 
 impl ToPixel for BasicElement {
-    fn to_pixel(&self) -> Vec<u8> {
+    fn to_pixel(&self) -> Pixel {
         match self {
-            BasicElement::Terrain => vec![0, 255, 0, 255],
-            BasicElement::Wall => vec![0, 0, 255, 255],
-            BasicElement::Void => vec![0, 0, 0, 0],
+            BasicElement::Terrain => [0, 255, 0, 255],
+            BasicElement::Wall => [0, 0, 255, 255],
+            BasicElement::Void => [0, 0, 0, 0],
         }
     }
 }
