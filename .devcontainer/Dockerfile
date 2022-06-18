@@ -7,3 +7,5 @@ USER vscode
 RUN curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain stable -y
 
 ENV PATH "/home/vscode/.cargo/bin:${PATH}"
+
+RUN rustup component add cargo clippy rls rustfmt rust-std rust-docs rls rust-src rust-analysis
