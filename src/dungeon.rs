@@ -16,8 +16,9 @@ impl Room {
             content: Array::default((size[0], size[1])),
         };
 
-        room.content.fill_inside_area(BasicElement::Terrain);
-        room.content.fill_outside_perimeter(BasicElement::Wall);
+        room.content
+            .fill_inside_area(BasicElement::Terrain)
+            .fill_outside_perimeter(BasicElement::Wall);
 
         room
     }
