@@ -1,19 +1,23 @@
-use crate::array::Fillable;
+use crate::array::{Fillable, Normalize};
 use crate::element::BasicElement;
 use crate::world::{ToWorld, World2D};
-use ndarray::{s, Array, Array2};
+use ndarray::{s, Array, Array1, Array2};
 use rand::{rngs::StdRng, Rng};
+use std::cmp::Ord;
 
+#[derive(Clone)]
 pub struct Room {
-    location: Vec<usize>,
+    location: Array1<usize>,
     content: Array2<BasicElement>,
+    dungeon_size: usize,
 }
 
 impl Room {
-    pub fn new(location: Vec<usize>, size: Vec<usize>) -> Self {
+    pub fn new(location: Array1<usize>, size: Vec<usize>, dungeon_size: usize) -> Self {
         let mut room = Room {
             location: location,
             content: Array::default((size[0], size[1])),
+            dungeon_size: dungeon_size,
         };
 
         room.content
@@ -22,52 +26,123 @@ impl Room {
 
         room
     }
+
+    pub fn new_random(rng: &mut StdRng, dungeon_size: usize) -> Self {
+        let size = Room::gen_size(rng, dungeon_size);
+        let location = Room::gen_location(rng, dungeon_size, &size);
+        Room::new(location, size.to_vec(), dungeon_size)
+    }
+
+    fn gen_size(rng: &mut StdRng, dungeon_size: usize) -> Array1<usize> {
+        let half_r = dungeon_size / 4;
+        const MIN_SIZE: usize = 10;
+        let gen_size = |_| rng.gen_range(MIN_SIZE..half_r / 2);
+        Array::from_iter((0..2).into_iter().map(gen_size))
+    }
+
+    fn gen_location(rng: &mut StdRng, dungeon_size: usize, size: &Array1<usize>) -> Array1<usize> {
+        let half_r = dungeon_size / 4;
+        let gen_location = |_| rng.gen_range(0..half_r);
+        let middle_location = Array::from_iter((0..2).into_iter().map(gen_location));
+        let top_right_location = middle_location - size / 2 + half_r * 3 / 2;
+        top_right_location
+    }
+
+    // https://www.hackerearth.com/practice/notes/how-to-check-if-two-rectangles-intersect-or-not/
+    pub fn is_overlapping(&self, other: &Room) -> bool {
+        let l1 = self.top_left();
+        let r1 = self.bottom_right();
+
+        let l2 = other.top_left();
+        let r2 = other.bottom_right();
+
+        !((l1[0] > r2[0]) || (r1[0] < l2[0]) || (l1[1] > r2[1]) || (r1[1] < l2[1]))
+    }
+
+    fn top_left(&self) -> &Array1<usize> {
+        &self.location
+    }
+
+    fn bottom_right(&self) -> Array1<usize> {
+        self.top_left() + &Array1::from_iter(self.content.shape())
+    }
+
+    pub fn middle(&self) -> Array1<f32> {
+        self.top_left().map(|e| *e as f32)
+            + (&Array1::from_iter(self.content.shape())).map(|e| *(*e) as f32 / 2.)
+    }
+
+    pub fn move_in_direction(&mut self, direction: &Array1<i32>) -> &mut Self {
+        // println!("{}", direction);
+        let clip = |e: &i32| (*e).clamp(0, self.dungeon_size as i32) as usize;
+        self.location = (self.location.map(|e| *e as i32) + direction).map(clip);
+        self
+    }
 }
 
 pub struct Dungeon {
-    rng: StdRng,
-    radius: usize,
+    size: usize,
     rooms: Vec<Room>,
 }
 
 impl Dungeon {
-    fn size(&self) -> usize {
-        self.radius * 2
-    }
-
-    fn gen_room(&mut self) -> Room {
-        let half_r = self.radius / 2;
-
-        let gen_location = |_| self.rng.gen_range(half_r..self.radius + half_r);
-        let location = (0..2).into_iter().map(gen_location).collect();
-
-        const MIN_SIZE: usize = 2;
-        let gen_size = |_| self.rng.gen_range(MIN_SIZE..half_r);
-        let size = (0..2).into_iter().map(gen_size).collect();
-
-        Room::new(location, size)
-    }
-
-    pub fn new(rng: StdRng, radius: usize, n_rooms: usize) -> Self {
+    pub fn new(rng: &mut StdRng, size: usize, n_rooms: usize) -> Self {
+        let gen_room = |_| Room::new_random(rng, size);
         let mut dungeon = Dungeon {
-            rng: rng,
-            radius: radius,
-            rooms: vec![],
+            size: size,
+            rooms: (0..n_rooms).into_iter().map(gen_room).collect(),
         };
-
-        let gen_room = |_| dungeon.gen_room();
-        dungeon.rooms = (0..n_rooms).into_iter().map(gen_room).collect();
-
+        dungeon.separate_rooms();
         dungeon
     }
 
+    fn separate_rooms(&mut self) -> &mut Self {
+        let mut any_room_overlapping = true;
+        while any_room_overlapping {
+            any_room_overlapping = false;
+            for i in 0..self.rooms.len() {
+                for j in 0..self.rooms.len() {
+                    if i == j {
+                        continue;
+                    }
+
+                    let direction: Option<Array1<i32>> = {
+                        let room1 = &self.rooms[i];
+                        let room2 = &self.rooms[j];
+                        if room1.is_overlapping(&room2) {
+                            Some(Dungeon::move_direction(room1, room2))
+                        } else {
+                            None
+                        }
+                    };
+
+                    if direction.is_none() {
+                        continue;
+                    }
+
+                    any_room_overlapping = true;
+                    self.rooms[i].move_in_direction(&direction.as_ref().unwrap().map(|e| -*e));
+                    self.rooms[j].move_in_direction(direction.as_ref().unwrap());
+                }
+            }
+        }
+
+        self
+    }
+    fn move_direction(room1: &Room, room2: &Room) -> Array1<i32> {
+        (room2.middle() - room1.middle())
+            .normalize()
+            .map(|e| if *e > 0. { e.ceil() } else { e.floor() } as i32)
+    }
+
     pub fn to_world(&self) -> World2D<BasicElement> {
-        let size = self.size();
-        let mut world = World2D::new_default((size, size));
+        let mut world = World2D::new_default((self.size, self.size));
         for room in &self.rooms {
+            let top_left = room.top_left();
+            let bottom_right = room.bottom_right();
             let room_slice = world.content.slice_mut(s![
-                room.location[0]..room.location[0] + room.content.shape()[0],
-                room.location[1]..room.location[1] + room.content.shape()[1]
+                top_left[0]..bottom_right[0],
+                top_left[1]..bottom_right[1]
             ]);
             room.content.assign_to(room_slice);
         }

@@ -1,4 +1,5 @@
-use ndarray::{s, Array2};
+use ndarray::{s, Array1, Array2};
+use num::{cast, Float};
 
 pub trait Fillable<V> {
     fn fill_inside_area(&mut self, value: V) -> &mut Self; // assumes wall size of 1
@@ -17,5 +18,17 @@ impl<V: Copy> Fillable<V> for Array2<V> {
         let mut slice = self.slice_mut(s![.., ..;self.shape()[1]-1]);
         slice.fill(value);
         self
+    }
+}
+
+pub trait Normalize {
+    fn normalize(&self) -> Self;
+}
+
+impl<V: Float> Normalize for Array1<V> {
+    fn normalize(&self) -> Self {
+        let magnitude: V =
+            cast((self.map(|e| ((*e) * (*e))).sum().to_f64().unwrap()).sqrt()).unwrap();
+        self.map(|e| *e / magnitude)
     }
 }
