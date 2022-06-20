@@ -4,7 +4,7 @@ use crate::num::Round;
 use crate::world::{ToWorld, World2D};
 use ndarray::{s, Array, Array1, Array2};
 use rand::{rngs::StdRng, Rng};
-use std::cmp::Ord;
+use std::{cmp::Ord, ops::Neg};
 
 #[derive(Clone)]
 pub struct Room {
@@ -128,7 +128,7 @@ impl Dungeon {
 
                     any_room_overlapping = true;
                     let direction = direction.as_ref().unwrap();
-                    self.rooms[i].translate(&direction.map(|e| -*e));
+                    self.rooms[i].translate(&direction.neg());
                     self.rooms[j].translate(direction);
                 }
             }
