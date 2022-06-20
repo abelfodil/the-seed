@@ -1,5 +1,5 @@
 use crate::img::{ToPixel, Pixel};
-use crate::random::RandomValue;
+use crate::rand::RandomValue;
 use rand::Rng;
 
 pub trait WorldElement: Default + ToPixel + Copy + RandomValue {}

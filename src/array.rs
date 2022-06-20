@@ -1,12 +1,12 @@
 use ndarray::{s, Array1, Array2};
 use num::{cast, Float};
 
-pub trait Fillable<V> {
+pub trait Fill<V> {
     fn fill_inside_area(&mut self, value: V) -> &mut Self; // assumes wall size of 1
     fn fill_outside_perimeter(&mut self, value: V) -> &mut Self; // assumes wall size of 1
 }
 
-impl<V: Copy> Fillable<V> for Array2<V> {
+impl<V: Copy> Fill<V> for Array2<V> {
     fn fill_inside_area(&mut self, value: V) -> &mut Self {
         let mut slice = self.slice_mut(s![0..-1, 0..-1]);
         slice.fill(value);

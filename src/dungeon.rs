@@ -1,5 +1,6 @@
-use crate::array::{Fillable, Normalize};
+use crate::array::{Fill, Normalize};
 use crate::element::BasicElement;
+use crate::num::Round;
 use crate::world::{ToWorld, World2D};
 use ndarray::{s, Array, Array1, Array2};
 use rand::{rngs::StdRng, Rng};
@@ -72,11 +73,16 @@ impl Room {
             + (&Array1::from_iter(self.content.shape())).map(|e| *(*e) as f32 / 2.)
     }
 
-    pub fn move_in_direction(&mut self, direction: &Array1<i32>) -> &mut Self {
-        // println!("{}", direction);
+    pub fn translate(&mut self, direction: &Array1<i32>) -> &mut Self {
         let clip = |e: &i32| (*e).clamp(0, self.dungeon_size as i32) as usize;
         self.location = (self.location.map(|e| *e as i32) + direction).map(clip);
         self
+    }
+
+    pub fn translate_direction(room1: &Room, room2: &Room) -> Array1<i32> {
+        (room2.middle() - room1.middle())
+            .normalize()
+            .map(|e| (*e).signed_ceil() as i32)
     }
 }
 
@@ -110,7 +116,7 @@ impl Dungeon {
                         let room1 = &self.rooms[i];
                         let room2 = &self.rooms[j];
                         if room1.is_overlapping(&room2) {
-                            Some(Dungeon::move_direction(room1, room2))
+                            Some(Room::translate_direction(room1, room2))
                         } else {
                             None
                         }
@@ -121,18 +127,14 @@ impl Dungeon {
                     }
 
                     any_room_overlapping = true;
-                    self.rooms[i].move_in_direction(&direction.as_ref().unwrap().map(|e| -*e));
-                    self.rooms[j].move_in_direction(direction.as_ref().unwrap());
+                    let direction = direction.as_ref().unwrap();
+                    self.rooms[i].translate(&direction.map(|e| -*e));
+                    self.rooms[j].translate(direction);
                 }
             }
         }
 
         self
-    }
-    fn move_direction(room1: &Room, room2: &Room) -> Array1<i32> {
-        (room2.middle() - room1.middle())
-            .normalize()
-            .map(|e| if *e > 0. { e.ceil() } else { e.floor() } as i32)
     }
 
     pub fn to_world(&self) -> World2D<BasicElement> {
