@@ -92,8 +92,9 @@ pub struct Dungeon {
 }
 
 impl Dungeon {
-    pub fn new(rng: &mut StdRng, size: usize, n_rooms: usize) -> Self {
+    pub fn new(rng: &mut StdRng, size: usize) -> Self {
         let gen_room = |_| Room::new_random(rng, size);
+        let n_rooms = (size as f64).sqrt() as usize;
         let mut dungeon = Dungeon {
             size: size,
             rooms: (0..n_rooms).into_iter().map(gen_room).collect(),
