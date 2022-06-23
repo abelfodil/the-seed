@@ -1,4 +1,5 @@
-use ndarray::{s, Array1, Array2};
+use conv::prelude::*;
+use ndarray::{s, Array, Array1, Array2, Dimension};
 use num::{cast, Float};
 
 pub trait Fill<V> {
@@ -30,5 +31,15 @@ impl<V: Float> Normalize for Array1<V> {
         let magnitude: V =
             cast((self.map(|e| ((*e) * (*e))).sum().to_f64().unwrap()).sqrt()).unwrap();
         self.map(|e| *e / magnitude)
+    }
+}
+
+pub trait Cast<T, D: Dimension> {
+    fn to<U: ValueFrom<T>>(&self) -> Array<U, D>;
+}
+
+impl<T: Copy, D: Dimension> Cast<T, D> for Array<T, D> {
+    fn to<U: ValueFrom<T>>(&self) -> Array<U, D> {
+        self.map(|e| (*e).value_as::<U>().unwrap())
     }
 }

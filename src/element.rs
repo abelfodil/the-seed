@@ -1,4 +1,4 @@
-use crate::img::{ToPixel, Pixel};
+use crate::img::{Pixel, ToPixel};
 use crate::rand::RandomValue;
 use rand::Rng;
 
@@ -13,11 +13,13 @@ pub enum BasicElement {
 }
 
 impl RandomValue for BasicElement {
-    fn random(rng: &mut impl Rng) -> BasicElement {
-        match rng.gen_range(0..=2) as u32 {
+    fn random<R: Rng + ?Sized>(rng: &mut R) -> BasicElement {
+        let index: u8 = rng.gen_range(0..3);
+        match index {
             0 => BasicElement::Terrain,
             1 => BasicElement::Wall,
-            _ => BasicElement::Void,
+            2 => BasicElement::Void,
+            _ => unreachable!(),
         }
     }
 }
@@ -28,6 +30,7 @@ impl ToPixel for BasicElement {
             BasicElement::Terrain => [0, 255, 0, 255],
             BasicElement::Wall => [0, 0, 255, 255],
             BasicElement::Void => [0, 0, 0, 0],
+            _ => unreachable!(),
         }
     }
 }

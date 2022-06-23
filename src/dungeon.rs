@@ -1,4 +1,4 @@
-use crate::array::{Fill, Normalize};
+use crate::array::{Cast, Fill, Normalize};
 use crate::element::BasicElement;
 use crate::num::Round;
 use crate::world::{ToWorld, World2D};
@@ -9,6 +9,7 @@ use std::{cmp::Ord, ops::Neg};
 #[derive(Clone)]
 pub struct Room {
     location: Array1<usize>,
+    dims: Array1<usize>,
     content: Array2<BasicElement>,
     dungeon_size: usize,
 }
@@ -17,6 +18,7 @@ impl Room {
     pub fn new(location: Array1<usize>, size: Vec<usize>, dungeon_size: usize) -> Self {
         let mut room = Room {
             location: location,
+            dims: Array1::from_vec(size.clone()),
             content: Array::default((size[0], size[1])),
             dungeon_size: dungeon_size,
         };
@@ -60,17 +62,16 @@ impl Room {
         !((l1[0] > r2[0]) || (r1[0] < l2[0]) || (l1[1] > r2[1]) || (r1[1] < l2[1]))
     }
 
-    fn top_left(&self) -> &Array1<usize> {
-        &self.location
+    fn top_left(&self) -> Array1<usize> {
+        self.location.clone()
     }
 
     fn bottom_right(&self) -> Array1<usize> {
-        self.top_left() + &Array1::from_iter(self.content.shape())
+        self.top_left() + self.dims.clone()
     }
 
     pub fn middle(&self) -> Array1<f32> {
-        self.top_left().map(|e| *e as f32)
-            + (&Array1::from_iter(self.content.shape())).map(|e| *(*e) as f32 / 2.)
+        self.top_left().to::<f32>() + self.dims.to::<f32>() / 2.
     }
 
     pub fn translate(&mut self, direction: &Array1<i32>) -> &mut Self {

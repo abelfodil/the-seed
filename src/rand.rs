@@ -1,5 +1,5 @@
 use rand::Rng;
 
 pub trait RandomValue {
-    fn random(rng: &mut impl Rng) -> Self;
+    fn random<R: Rng + ?Sized>(rng: &mut R) -> Self;
 }
