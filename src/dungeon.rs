@@ -4,7 +4,7 @@ use crate::room::Room;
 use crate::world::World2D;
 use ndarray::s;
 use petgraph::{data::FromElements, graph::UnGraph};
-use rand::rngs::StdRng;
+use rand::Rng;
 use std::convert::Into;
 
 pub struct Dungeon {
@@ -13,7 +13,7 @@ pub struct Dungeon {
 }
 
 impl Dungeon {
-    pub fn new(rng: &mut StdRng, size: usize) -> Self {
+    pub fn new<R: Rng + ?Sized>(rng: &mut R, size: usize) -> Self {
         let gen_room = |_| Room::new_random(rng, size);
         let n_rooms = (size as f64).sqrt() as usize;
         let mut raw_rooms: Vec<_> = (0..n_rooms).into_iter().map(gen_room).collect();

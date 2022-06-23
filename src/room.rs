@@ -3,7 +3,7 @@ use crate::element::BasicElement;
 use crate::geom::{Rectangle, Translate};
 use ndarray::{Array, Array1, Array2};
 use petgraph::data::Element;
-use rand::{rngs::StdRng, Rng};
+use rand::Rng;
 use std::cmp::Ord;
 
 #[derive(Clone)]
@@ -25,7 +25,7 @@ impl Room {
         }
     }
 
-    pub fn new_random(rng: &mut StdRng, dungeon_size: usize) -> Self {
+    pub fn new_random<R: Rng + ?Sized>(rng: &mut R, dungeon_size: usize) -> Self {
         let size = Room::gen_size(rng, dungeon_size);
         let location = Room::gen_location(rng, dungeon_size, &size);
         Room::new(location, size.to_vec(), dungeon_size)
@@ -35,14 +35,18 @@ impl Room {
         rooms.into_iter().map(|room| room.into())
     }
 
-    fn gen_size(rng: &mut StdRng, dungeon_size: usize) -> Array1<usize> {
+    fn gen_size<R: Rng + ?Sized>(rng: &mut R, dungeon_size: usize) -> Array1<usize> {
         let half_r = dungeon_size / 4;
         const MIN_SIZE: usize = 10;
         let gen_size = |_| rng.gen_range(MIN_SIZE..half_r / 2);
         Array::from_iter((0..2).into_iter().map(gen_size))
     }
 
-    fn gen_location(rng: &mut StdRng, dungeon_size: usize, size: &Array1<usize>) -> Array1<usize> {
+    fn gen_location<R: Rng + ?Sized>(
+        rng: &mut R,
+        dungeon_size: usize,
+        size: &Array1<usize>,
+    ) -> Array1<usize> {
         let half_r = dungeon_size / 4;
         let gen_location = |_| rng.gen_range(0..half_r);
         let middle_location = Array::from_iter((0..2).into_iter().map(gen_location));
