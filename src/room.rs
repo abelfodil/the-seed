@@ -2,6 +2,7 @@ use crate::array::Fill;
 use crate::element::BasicElement;
 use crate::geom::{Rectangle, Translate};
 use ndarray::{Array, Array1, Array2};
+use petgraph::data::Element;
 use rand::{rngs::StdRng, Rng};
 use std::cmp::Ord;
 
@@ -28,6 +29,10 @@ impl Room {
         let size = Room::gen_size(rng, dungeon_size);
         let location = Room::gen_location(rng, dungeon_size, &size);
         Room::new(location, size.to_vec(), dungeon_size)
+    }
+
+    pub fn to_elements(rooms: Vec<Room>) -> impl Iterator<Item = Element<Room, usize>> {
+        rooms.into_iter().map(|room| room.into())
     }
 
     fn gen_size(rng: &mut StdRng, dungeon_size: usize) -> Array1<usize> {
@@ -65,5 +70,11 @@ impl Translate for Room {
         let clip = |e: &i32| (*e).clamp(0, self.dungeon_size as i32) as usize;
         self.location = (self.location.map(|e| *e as i32) + direction).map(clip);
         self
+    }
+}
+
+impl Into<Element<Room, usize>> for Room {
+    fn into(self) -> Element<Room, usize> {
+        Element::Node { weight: self }
     }
 }

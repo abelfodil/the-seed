@@ -3,10 +3,7 @@ use crate::geom::{Rectangle, Separate, Triangulate};
 use crate::room::Room;
 use crate::world::World2D;
 use ndarray::s;
-use petgraph::{
-    data::{Element, FromElements},
-    graph::UnGraph,
-};
+use petgraph::{data::FromElements, graph::UnGraph};
 use rand::rngs::StdRng;
 use std::convert::Into;
 
@@ -22,22 +19,14 @@ impl Dungeon {
         let mut raw_rooms: Vec<_> = (0..n_rooms).into_iter().map(gen_room).collect();
         Room::separate(&mut raw_rooms);
         let edges = Room::triangulate(&raw_rooms);
-        let raw_rooms: Vec<_> = Dungeon::rooms_to_elements(raw_rooms);
-        let rooms =
-            UnGraph::<Room, usize>::from_elements(raw_rooms.into_iter().chain(edges.into_iter()));
+        let raw_rooms = Room::to_elements(raw_rooms);
+        let rooms = UnGraph::<Room, usize>::from_elements(raw_rooms.chain(edges.into_iter()));
         let dungeon = Dungeon { size, rooms };
         dungeon
     }
 
     fn raw_rooms(&self) -> impl Iterator<Item = &Room> + '_ {
         self.rooms.raw_nodes().iter().map(|e| &e.weight)
-    }
-
-    fn rooms_to_elements(rooms: Vec<Room>) -> Vec<Element<Room, usize>> {
-        rooms
-            .into_iter()
-            .map(|room| Element::Node { weight: room })
-            .collect()
     }
 }
 
