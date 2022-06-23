@@ -1,9 +1,8 @@
-use crate::img::{Pixel, ToPixel};
 use crate::rand::RandomValue;
 use rand::Rng;
 
-pub trait WorldElement: Default + ToPixel + Copy + RandomValue {}
-impl<T> WorldElement for T where T: Default + ToPixel + Copy + RandomValue {}
+pub trait WorldElement: Default + Into<Pixel> + Copy + RandomValue {}
+impl<T> WorldElement for T where T: Default + Into<Pixel> + Copy + RandomValue {}
 
 #[derive(Clone, Copy)]
 pub enum BasicElement {
@@ -24,13 +23,14 @@ impl RandomValue for BasicElement {
     }
 }
 
-impl ToPixel for BasicElement {
-    fn to_pixel(&self) -> Pixel {
+type Pixel = [u8; 4];
+
+impl Into<Pixel> for BasicElement {
+    fn into(self) -> Pixel {
         match self {
             BasicElement::Terrain => [0, 255, 0, 255],
             BasicElement::Wall => [0, 0, 255, 255],
             BasicElement::Void => [0, 0, 0, 0],
-            _ => unreachable!(),
         }
     }
 }

@@ -1,13 +1,14 @@
 use crate::element::BasicElement;
 use crate::geom::{Rectangle, Separate, Triangulate};
 use crate::room::Room;
-use crate::world::{ToWorld, World2D};
+use crate::world::World2D;
 use ndarray::s;
 use petgraph::{
     data::{Element, FromElements},
     graph::UnGraph,
 };
 use rand::rngs::StdRng;
+use std::convert::Into;
 
 pub struct Dungeon {
     size: usize,
@@ -38,8 +39,10 @@ impl Dungeon {
             .map(|room| Element::Node { weight: room })
             .collect()
     }
+}
 
-    pub fn to_world(&self) -> World2D<BasicElement> {
+impl Into<World2D<BasicElement>> for Dungeon {
+    fn into(self) -> World2D<BasicElement> {
         let mut world = World2D::new_default((self.size, self.size));
         for room in self.raw_rooms() {
             let top_left = room.top_left();

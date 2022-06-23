@@ -1,20 +1,22 @@
+mod array;
 mod dungeon;
 mod element;
-mod img;
-mod rand;
-mod world;
-mod array;
-mod num;
 mod geom;
+mod num;
+mod rand;
 mod room;
+mod world;
 
-use dungeon::Dungeon;
-use img::ToImage;
+use crate::dungeon::Dungeon;
+use crate::element::BasicElement;
+use crate::world::World2D;
+
+use ::image::RgbaImage;
 use ::rand::{rngs::StdRng, SeedableRng};
 
 fn main() {
     let mut rng: StdRng = SeedableRng::seed_from_u64(0x0DDB1A5E5BAD5EEDu64);
     let dungeon = Dungeon::new(&mut rng, 1000);
-    let world = dungeon.to_world();
-    let _ = world.to_image().save("image.png");
+    let world: World2D<BasicElement> = dungeon.into();
+    let _ = Into::<RgbaImage>::into(world).save("image.png");
 }

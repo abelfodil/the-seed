@@ -1,7 +1,7 @@
 use crate::array::Fill;
 use crate::element::BasicElement;
 use crate::geom::{Rectangle, Translate};
-use ndarray::{s, Array, Array1, Array2};
+use ndarray::{Array, Array1, Array2};
 use rand::{rngs::StdRng, Rng};
 use std::cmp::Ord;
 
