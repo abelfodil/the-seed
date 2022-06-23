@@ -3,7 +3,7 @@ pub trait Round {
     fn signed_floor(&self) -> Self;
 }
 
-impl Round for f32 {
+impl Round for f64 {
     fn signed_ceil(&self) -> Self {
         self.signum() * self.abs().ceil()
     }

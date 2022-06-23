@@ -1,0 +1,69 @@
+use crate::array::Fill;
+use crate::element::BasicElement;
+use crate::geom::{Rectangle, Translate};
+use ndarray::{s, Array, Array1, Array2};
+use rand::{rngs::StdRng, Rng};
+use std::cmp::Ord;
+
+#[derive(Clone)]
+pub struct Room {
+    pub content: Array2<BasicElement>,
+    location: Array1<usize>,
+    dungeon_size: usize,
+}
+
+impl Room {
+    pub fn new(location: Array1<usize>, size: Vec<usize>, dungeon_size: usize) -> Self {
+        Room {
+            location: location,
+            content: Array::default((size[0], size[1]))
+                .fill_inside_area(BasicElement::Terrain)
+                .fill_outside_perimeter(BasicElement::Wall)
+                .clone(),
+            dungeon_size: dungeon_size,
+        }
+    }
+
+    pub fn new_random(rng: &mut StdRng, dungeon_size: usize) -> Self {
+        let size = Room::gen_size(rng, dungeon_size);
+        let location = Room::gen_location(rng, dungeon_size, &size);
+        Room::new(location, size.to_vec(), dungeon_size)
+    }
+
+    fn gen_size(rng: &mut StdRng, dungeon_size: usize) -> Array1<usize> {
+        let half_r = dungeon_size / 4;
+        const MIN_SIZE: usize = 10;
+        let gen_size = |_| rng.gen_range(MIN_SIZE..half_r / 2);
+        Array::from_iter((0..2).into_iter().map(gen_size))
+    }
+
+    fn gen_location(rng: &mut StdRng, dungeon_size: usize, size: &Array1<usize>) -> Array1<usize> {
+        let half_r = dungeon_size / 4;
+        let gen_location = |_| rng.gen_range(0..half_r);
+        let middle_location = Array::from_iter((0..2).into_iter().map(gen_location));
+        let top_right_location = middle_location - size / 2 + half_r * 3 / 2;
+        top_right_location
+    }
+}
+
+impl Rectangle for Room {
+    fn dimensions(&self) -> Array1<usize> {
+        Array1::from_iter(self.content.shape().to_vec())
+    }
+
+    fn top_left(&self) -> Array1<usize> {
+        self.location.clone()
+    }
+
+    fn bottom_right(&self) -> Array1<usize> {
+        self.top_left() + self.dimensions().clone()
+    }
+}
+
+impl Translate for Room {
+    fn translate(&mut self, direction: &Array1<i32>) -> &mut Self {
+        let clip = |e: &i32| (*e).clamp(0, self.dungeon_size as i32) as usize;
+        self.location = (self.location.map(|e| *e as i32) + direction).map(clip);
+        self
+    }
+}

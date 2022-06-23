@@ -5,6 +5,8 @@ mod rand;
 mod world;
 mod array;
 mod num;
+mod geom;
+mod room;
 
 use dungeon::Dungeon;
 use img::ToImage;
