@@ -50,7 +50,7 @@ impl Room {
         let half_r = dungeon_size / 4;
         let gen_location = |_| rng.gen_range(0..half_r);
         let middle_location = Array::from_iter((0..2).into_iter().map(gen_location));
-        let top_right_location = middle_location - size / 2 + half_r * 3 / 2;
+        let top_right_location = (middle_location + half_r * 3 / 2) - size / 2;
         top_right_location
     }
 }
