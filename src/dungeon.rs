@@ -24,7 +24,8 @@ impl Dungeon {
         let edges = Room::triangulate(&raw_rooms);
         let raw_rooms = Room::to_elements(raw_rooms);
         let rooms = UnGraph::<Room, usize>::from_elements(raw_rooms.chain(edges.into_iter()));
-        let rooms = UnGraph::<Room, usize>::from_elements(min_spanning_tree(&rooms));
+        // let rooms = UnGraph::<Room, usize>::from_elements(min_spanning_tree(&rooms));
+        // TODO restore some edges
         Self { size, rooms }
     }
 
@@ -67,31 +68,41 @@ impl Into<World2D<BasicElement>> for Dungeon {
             let direction = exit1.to::<i32>() - exit2.to::<i32>();
             const THRESHHOLD: i32 = 10;
             let abs_direction = direction.map(|x| x.abs());
-            if abs_direction[0] < THRESHHOLD {
-                world
-                    .content
-                    .slice_mut(s![exit1[0], exit1[1].min(exit2[1])..exit1[1].max(exit2[1])])
-                    .fill(BasicElement::Path);
-            } else if abs_direction[1] < THRESHHOLD {
-                world
-                    .content
-                    .slice_mut(s![exit1[0].min(exit2[0])..exit1[0].max(exit2[0]), exit1[1]])
-                    .fill(BasicElement::Path);
-            } else {
-                let pos1 = exit2[0] + direction[0];
-                let pos2 = exit2[0];
-                world
-                    .content
-                    .slice_mut(s![pos1.min(pos2)..pos1.max(pos2), exit2[1]])
-                    .fill(BasicElement::Path);
 
-                let pos1 = exit1[1] - direction[1];
-                let pos2 = exit1[1];
-                world
-                    .content
-                    .slice_mut(s![exit1[0], pos1.min(pos2)..pos1.max(pos2)])
-                    .fill(BasicElement::Path);
-            }
+            if abs_direction[0] < THRESHHOLD {
+                *world.content.get_mut((exit1[0], exit1[1])).unwrap() = BasicElement::Path;
+                *world.content.get_mut((exit2[0], exit2[1])).unwrap() = BasicElement::Path;
+                print!("{}\n", exit1);
+                print!("{}\n", exit2);
+                print!("{}\n", direction);
+                print!("{}\n\n", abs_direction);
+
+                // world
+                //     .content
+                //     .slice_mut(s![exit1[0], exit1[1].min(exit2[1])..exit1[1].max(exit2[1])])
+                //     .fill(BasicElement::Path);
+            } 
+            // else if abs_direction[1] < THRESHHOLD {
+            //     world
+            //         .content
+            //         .slice_mut(s![exit1[0].min(exit2[0])..exit1[0].max(exit2[0]), exit1[1]])
+            //         .fill(BasicElement::Path);
+            // } 
+            // else {
+            //     let pos1 = exit2[0] + direction[0];
+            //     let pos2 = exit2[0];
+            //     world
+            //         .content
+            //         .slice_mut(s![pos1.min(pos2)..pos1.max(pos2), exit2[1]])
+            //         .fill(BasicElement::Path);
+
+            //     let pos1 = exit1[1] - direction[1];
+            //     let pos2 = exit1[1];
+            //     world
+            //         .content
+            //         .slice_mut(s![exit1[0], pos1.min(pos2)..pos1.max(pos2)])
+            //         .fill(BasicElement::Path);
+            // }
         }
 
         world
