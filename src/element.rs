@@ -33,7 +33,7 @@ impl Into<Pixel> for BasicElement {
         match self {
             BasicElement::Terrain => [0, 255, 0, 255],
             BasicElement::Wall => [0, 0, 255, 255],
-            BasicElement::Path => [255, 0, 0, 0],
+            BasicElement::Path => [255, 0, 0, 255],
             BasicElement::Void => [0, 0, 0, 0],
         }
     }

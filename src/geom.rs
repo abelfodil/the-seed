@@ -1,7 +1,7 @@
 use crate::array::{Cast, Normalize};
 use crate::num::Round;
 use delaunator::{triangulate, Point};
-use ndarray::Array1;
+use ndarray::{arr1, Array1};
 use petgraph::data::Element;
 use std::ops::Neg;
 
@@ -45,8 +45,11 @@ where
     Self: Middle,
 {
     fn translate(&mut self, direction: &Array1<i32>) -> &mut Self;
-    fn translate_direction(obj1: &Self, obj2: &Self) -> Array1<i32> {
-        (obj2.middle() - obj1.middle())
+    fn translate_direction(obj1: &Self, obj2: &Self) -> Array1<f64> {
+        obj2.middle() - obj1.middle()
+    }
+    fn normalized_translate_direction(obj1: &Self, obj2: &Self) -> Array1<i32> {
+        Self::translate_direction(obj1, obj2)
             .normalize()
             .map(|e| (*e).signed_ceil() as i32)
     }
@@ -70,7 +73,7 @@ where
                         let object1 = &objects[i];
                         let object2 = &objects[j];
                         if object1.is_overlapping(&object2) {
-                            Some(Self::translate_direction(object1, object2))
+                            Some(Self::normalized_translate_direction(object1, object2))
                         } else {
                             None
                         }
@@ -94,6 +97,23 @@ pub trait Rectangle: Overlap + Middle + Area + Translate {
     fn top_left(&self) -> Array1<usize>;
     fn bottom_right(&self) -> Array1<usize>;
     fn dimensions(&self) -> Array1<usize>;
+    fn get_edge_location(&self, direction: Array1<f64>) -> Array1<usize> {
+        let angle = direction[1].atan2(direction[0]);
+        let quadrant = ((angle + std::f64::consts::FRAC_PI_4 + std::f64::consts::TAU)
+            / std::f64::consts::FRAC_PI_2)
+            .floor() as u32
+            % 4;
+        let middle = self.middle();
+        let half_dims = self.dimensions().to::<f64>() / 2.;
+        let to_int = |arr: Array1<f64>| arr.map(|e| e.floor() as usize);
+        match quadrant {
+            0 => to_int(middle + arr1(&[half_dims[0], 0.])),
+            1 => to_int(middle + arr1(&[0., half_dims[1]])),
+            2 => to_int(middle + arr1(&[-half_dims[0], 0.])),
+            3 => to_int(middle + arr1(&[0., -half_dims[1]])),
+            _ => unreachable!(),
+        }
+    }
 }
 
 impl<T: Rectangle> Overlap for T {
